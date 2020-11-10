@@ -1,6 +1,10 @@
 #ifndef AUTONFUNCTIONS_H
 #define AUTONFUNCTIONS_H
 
+//Custom unfolding sequence
+void autonUnfold();
+
+//Optimized calibration
 void inertialCalibration();
 
 void setDriveSpeed(int leftSpeed, int rightSpeed);
@@ -17,7 +21,9 @@ void setIntakeSpeed(int speed);
 
 void brakeIntake(); 
 
-void setConveyorSpeed(int speed);
+void setIndexingSpeed(int speed);
+
+void setSortingSpeed(int speed);
 
 void brakeConveyor();
 
@@ -106,6 +112,9 @@ int BallCount(void);
 int intakeOn( void );
 
 void intakeOff( void );
+
+//Custom made scoring function:
+void score1Ball();
 
 void outtake1BallAuton( void );
 void outtake1BallAutonSlow( void );
