@@ -39,7 +39,7 @@ void moveForwardWalk(double distanceIn, double maxVelocity, double headingOfRobo
 
 void deaccel(int speed, double dist, double strength);
 
-void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, double multiply, double addingFactor);
+void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, double multiply, double multiplyForHorizontal, double addingFactor);
 
 void stafeThanForward(double speed, bool side);
 

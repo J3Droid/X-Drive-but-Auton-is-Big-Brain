@@ -53,6 +53,7 @@ competition Competition;
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
+  preAuton();
 
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
@@ -73,7 +74,7 @@ void pre_auton(void) {
 void autonomous(void) {
   // ..........................................................................
 
-  inertialCalibration();
+  //inertialCalibration();
   testRun();
   //task fakeSpaceMan = task(update);  
   //homeRowAuton();

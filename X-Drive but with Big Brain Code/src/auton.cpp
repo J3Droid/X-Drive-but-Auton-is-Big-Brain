@@ -711,7 +711,7 @@ void moveForwardWalk(double distanceIn, double maxVelocity, double headingOfRobo
     double rotationLeftBack = pow(back_L.rotation(rev), 2);
     combinedDriftError = sqrt(rotationLeft + rotationLeftBack);*/
 
-    combinedDriftErrorMultiply = combinedDriftError * (3.14159); 
+    combinedDriftErrorMultiply = combinedDriftError * (3.1415926);
 
     back_encoderError = (back_encoder.rotation(rev) * circumference * 1);
 
@@ -1084,10 +1084,10 @@ main ()
 }
 */ // This is for testing on an online compiler to make sure the speeds are resonable 
 
-void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, double multiply, double addingFactor) {
+void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, double multiply, double multiplyForHorizontal, double addingFactor) {
 
   static
-  const double circumference = 3.14159 * 2.75;
+  const double circumference = 3.1415926 * 2.825; //used to be 2.75
   if (distanceIn == 0)
     return;
   double direction = distanceIn > 0 ? 1.0 : -1.0;
@@ -1104,8 +1104,6 @@ void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, do
   double rightStartPoint1 = (back_encoder.rotation(rotationUnits::rev));
   double rightEndPoint1 = rightStartPoint1 + wheelRevs;
 
-  int sameEncoderValue = 0;
-
   front_L.spin(fwd, direction * minimum_velocity, velocityUnits::pct);
   back_L.spin(fwd, direction * -minimum_velocity, velocityUnits::pct);
   front_R.spin(fwd, direction * -minimum_velocity, velocityUnits::pct);
@@ -1114,7 +1112,10 @@ void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, do
   task::sleep(90);
   printf("front right encoder %f\n", front_R.rotation(rev));
   printf("distance needed to travel %f\n", rightEndPoint);
+
+  int sameEncoderValue = 0;
   double distanceTraveled = 0;
+
   //double driftLeftError = (front_R.rotation(deg) + back_L.rotation(deg));
   //double driftRightError = (front_L.rotation(deg) + back_R.rotation(deg));
   //double previousOffset = (driftLeftError - driftRightError) / 2;
@@ -1131,17 +1132,50 @@ void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, do
 
     //double rotationLeft = pow(front_L.rotation(rev), 2);
     //double rotationLeftBack = pow(back_L.rotation(rev), 2);
+
+    //distanceTraveledlast = distanceTraveled; //not sure what this does yet
     distanceTraveled = (back_encoder.rotation(rotationUnits::rev));
 
-    //double driftLeftError = (front_R.rotation(deg) + back_L.rotation(deg));
-    //double driftRightError = (front_L.rotation(deg) + back_R.rotation(deg));
-    double error = ((left_encoder.rotation(rotationUnits::rev) + right_encoder.rotation(rotationUnits::rev)) / 2);
+    //Added Section begins here -----
+    driftLeftError = (front_L.rotation(rev) + back_R.rotation(rev));
+    driftRightError = (front_R.rotation(rev) + back_L.rotation(rev)) * -1;
+    //^^ switched from moveForwardWalk
+    combinedDriftError = ((driftLeftError - driftRightError));
 
-    if (error > -2.5 && error < 2.5) {
+    combinedDriftErrorMultiply = combinedDriftError * (3.1415926);
+    //Added section ends here -----
+    
+    double error = ((left_encoder.rotation(rotationUnits::rev) + right_encoder.rotation(rotationUnits::rev)) / 2);
+    double verticalError = error * circumference * -1;
+
+    /*if (error > -2.5 && error < 2.5) {
       headingErrorTest = direction * 0;
     } else {
       headingErrorTest = direction * 0;
+    }*/
+
+    if(fabs(verticalError) == verticalError){
+      combinedDriftErrorMultiply = fabs(combinedDriftErrorMultiply);
+      //printf("i am failing");
     }
+    else{
+      if(fabs(combinedDriftErrorMultiply) == combinedDriftErrorMultiply){
+        combinedDriftErrorMultiply = (-1) * (combinedDriftErrorMultiply);
+      }
+      else {
+       combinedDriftErrorMultiply = combinedDriftErrorMultiply * 1;
+      }
+    }
+
+    //Added code starts here -----
+    pogChamp = ((verticalError + combinedDriftErrorMultiply) * 0.5);
+    if (fabs(pogChamp) > 0.1) {
+      headingErrorTest = (pogChamp) * multiplyForHorizontal;
+    } 
+    else{
+      headingErrorTest = 0;
+    }
+    //Added code ends here -----
 
     headingError = -(headingOfRobot - get_average_inertial()) * multiply;
     printf("heading error %f\n", headingError);
@@ -1158,7 +1192,7 @@ void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, do
               distanceTraveled, addingFactor),
             decreasing_speed(leftEndPoint,
               distanceTraveled))) +
-        (headingError),
+        (headingError) - (headingErrorTest), // Added section abt headingErrorTest
         vex::velocityUnits::pct);
     } else {
       front_L.stop(hold);
@@ -1172,7 +1206,7 @@ void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, do
                 distanceTraveled, addingFactor),
               decreasing_speed(leftEndPoint1,
                 distanceTraveled))) +
-          (headingError)),
+          (headingError) + (headingErrorTest)), // Added section abt headingErrorTest
         vex::velocityUnits::pct);
     } else {
       back_L.stop(hold);
@@ -1187,7 +1221,7 @@ void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, do
                 distanceTraveled, addingFactor),
               decreasing_speed(rightEndPoint,
                 distanceTraveled))) -
-          (headingError)),
+          (headingError) + (headingErrorTest)), // Added section abt headingErrorTest
         vex::velocityUnits::pct);
     } else {
       front_R.stop(hold);
@@ -1201,7 +1235,7 @@ void strafeWalk(double distanceIn, double maxVelocity, double headingOfRobot, do
               distanceTraveled, addingFactor),
             decreasing_speed(rightEndPoint1,
               distanceTraveled))) -
-        (headingError),
+        (headingError) - (headingErrorTest), // Added section abt headingErrorTest
         vex::velocityUnits::pct);
     } else {
       back_R.stop(hold);
@@ -1424,7 +1458,7 @@ void strafeWhileTurning(int speed, double distance){
   printf("heading average  %f\n", get_average_inertial()); 
   task::sleep(10); 
 } 
-strafeWalk(-10, 80, 90, 0.6, 0); 
+strafeWalk(-10, 80, 90, 0.6, 2, 0); 
 }
 
 int intakeOn() {
@@ -1822,11 +1856,8 @@ void outtakeIntakes(double revolutions, int speed){
 void preAuton() {
 
   right_inertial.calibrate();
-  while(right_inertial.isCalibrating()){
-    wait(100, msec);
-  }
   left_inertial.calibrate();
-  while(left_inertial.isCalibrating()){
+  while(right_inertial.isCalibrating() || left_inertial.isCalibrating()){
     wait(100, msec);
   }
 
@@ -2007,7 +2038,7 @@ void testRun()
   task progAutoIndex = task (progAutoIndexCallback);
   stopIntakeOn();
   brakeIntake();
-  strafeWalk(15.25, 80, 0, 0.6, 0); // Move in front of front left corner goal
+  strafeWalk(15.25, 80, 0, 0.6, 2, 0); // Move in front of front left corner goal
   autonUnfold();
 
 
@@ -2021,7 +2052,7 @@ void testRun()
 
 
   // Pick up left field wall ball #1
-  strafeWalk(12, 80, 0, 0.6, 0); // Strafe behind field wall ball #1
+  strafeWalk(12, 80, 0, 0.6, 2, 0); // Strafe behind field wall ball #1
   createIntakeOnTask();
   moveForwardWalk(9.75, 90, 0, 0.6, 2, 0); // Approach field wall ball
   wait(0.5, sec);
@@ -2031,7 +2062,7 @@ void testRun()
 
 
   //Score in left center goal
-  strafeWalk(36, 80, 0, 0.6, 0); // Move behind left center goal
+  strafeWalk(36, 80, 0, 0.6, 2, 0); // Move behind left center goal
   moveForwardWalk(3.39, 80, 0, 0.6, 2, 0); // Align with left center goal
   score1Ball();
   moveForwardWalk(-3.39, 80, 0, 0.6, 2, 0); // Back up from left center goal
@@ -2039,7 +2070,7 @@ void testRun()
   
 
   // Pick up left field wall ball #2
-  strafeWalk(36, 80, 0, 0.6, 0); // Move behind field wall ball #2
+  strafeWalk(36, 80, 0, 0.6, 2, 0); // Move behind field wall ball #2
   createIntakeOnTask();
   moveForwardWalk(9.75, 90, 0, 0.6, 2, 0); // Approach field wall ball
   wait(0.5, sec);
@@ -2049,7 +2080,7 @@ void testRun()
 
 
   // Score in back left corner goal
-  strafeWalk(12, 80, 0, 0.6, 0); // Move in front of back left corner goal
+  strafeWalk(12, 80, 0, 0.6, 2, 0); // Move in front of back left corner goal
   rotatePID(-45, 90); // Face back left corner goal
   moveForwardWalk(10.71, 80, -45, 0.6, 2, 0); // Align with front left corner goal
   score1Ball();
